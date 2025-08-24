@@ -55,10 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleAttendance() {
         let lastPlayedDateStr = localStorage.getItem(LAST_PLAYED_DATE_KEY);
-        let storedStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
-        let storedAbsence = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
-        let storedDailyCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
-        let storedGoalMet = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
+        attendanceStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
+        absenceCount = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
+        dailyPlayCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
+        dailyGoalMetToday = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -70,17 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays === 0) { // Same day
-                dailyPlayCount = storedDailyCount;
-                attendanceStreak = storedStreak;
-                absenceCount = storedAbsence;
-                dailyGoalMetToday = storedGoalMet;
-            } else { // It's a new day
-                if (storedDailyCount < DAILY_PLAY_TARGET) {
-                    absenceCount = storedAbsence + diffDays;
-                } else {
-                    attendanceStreak = storedStreak + 1;
-                    absenceCount = 0;
+            if (diffDays > 0) { // It's a new day
+                if (dailyPlayCount < DAILY_PLAY_TARGET) {
+                    absenceCount += diffDays;
                 }
 
                 if (absenceCount > ABSENCE_GRACE_DAYS) {
@@ -273,6 +265,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     gridContainer.addEventListener('mouseup', () => {
+        if (isSelecting) {
+            isSelecting = false;
+            checkSelectedWord();
+            document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+            selectedCells = [];
+        }
+    });
+
+    gridContainer.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('grid-cell')) {
+            isSelecting = true;
+            selectedCells = [e.target];
+            e.target.classList.add('selected');
+            e.preventDefault();
+        }
+    });
+
+    gridContainer.addEventListener('touchmove', (e) => {
+        if (isSelecting) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.classList.contains('grid-cell') && !selectedCells.includes(target)) {
+                selectedCells.push(target);
+                target.classList.add('selected');
+            }
+        }
+    });
+
+    gridContainer.addEventListener('touchend', () => {
         if (isSelecting) {
             isSelecting = false;
             checkSelectedWord();
