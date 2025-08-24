@@ -1,17 +1,22 @@
 body {
     font-family: 'Arial', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
     margin: 0;
+    padding: 20px 0;
     background-color: #f0f8ff;
     color: #333;
 }
 
+h1, #attendance-info, #game-container {
+    width: 95%;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
 h1 {
     color: #4a7c59;
+    text-align: center;
     margin-bottom: 15px;
 }
 
@@ -43,8 +48,6 @@ h1 {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    width: 95%;
-    max-width: 500px;
 }
 
 #word-list-container {
@@ -69,13 +72,14 @@ h1 {
 
 #grid-container {
     display: grid;
-    background-color: #ccc; /* The color of the "borders" */
-    grid-gap: 1px; /* The width of the "borders" */
+    background-color: #ccc;
+    grid-gap: 1px;
     border: 1px solid #ccc;
     grid-template-columns: repeat(8, 1fr);
     grid-auto-rows: 1fr;
     width: 100%;
     aspect-ratio: 8 / 10;
+    touch-action: none; /* Prevent scrolling on vertical drag */
 }
 
 .grid-cell {
@@ -85,7 +89,7 @@ h1 {
     align-items: center;
     justify-content: center;
     background-color: #fff;
-    font-size: 4vw; /* Adjusted font size for mobile */
+    font-size: 4vw;
     font-weight: bold;
     cursor: pointer;
     user-select: none;
@@ -101,7 +105,7 @@ h1 {
 }
 
 #message-area {
-    position: absolute;
+    position: fixed; /* Use fixed to overlay on viewport */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -191,8 +195,7 @@ h1 {
 /* Media query for larger screens */
 @media (min-width: 768px) {
     #game-container {
-        padding: 30px;
-        max-width: 600px;
+        max-width: 500px;
     }
 
     #grid-container {
@@ -201,6 +204,6 @@ h1 {
     }
 
     .grid-cell {
-        font-size: 2em; /* Adjusted font size for desktop */
+        font-size: 2em;
     }
 }
