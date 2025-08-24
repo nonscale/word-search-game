@@ -11,7 +11,6 @@ body {
     flex-direction: column;
     background-color: #f0f8ff;
     color: #333;
-    /* Use dynamic viewport height to account for mobile browser UI */
     height: 100dvh;
     padding: 5px;
     box-sizing: border-box;
@@ -110,7 +109,7 @@ h1 {
     align-items: center;
     justify-content: center;
     background-color: #fff;
-    font-size: 5.5vw;
+    font-size: 6.5vw; /* Increased font size for mobile */
     font-weight: bold;
     cursor: pointer;
     user-select: none;
@@ -228,6 +227,6 @@ h1 {
     }
 
     .grid-cell {
-        font-size: 2.5em;
+        font-size: 2.8em; /* Increased font size for desktop */
     }
 }
