@@ -1,0 +1,298 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
+    const gridContainer = document.getElementById('grid-container');
+    const messageArea = document.getElementById('message-area');
+    const absenceDisplay = document.getElementById('absence-display');
+    const remainingDaysDisplay = document.getElementById('remaining-days-display');
+    const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
+    const remainingWordsCountSpan = document.getElementById('remaining-words-count');
+    const motivationModal = document.getElementById('motivation-modal');
+    const closeModalButton = document.querySelector('.close-button');
+    const startGameButton = document.getElementById('start-game-button');
+
+    // --- Constants ---
+    const GRID_ROWS = 10;
+    const GRID_COLS = 8;
+    const WORDS_PER_PUZZLE = 8;
+    const ALL_POSSIBLE_WORDS = [
+        '행복', '기쁨', '사랑', '평화', '희망', '건강', '웃음', '감사', '용기', '지혜',
+        '성장', '발전', '성공', '미래', '소망', '도전', '열정', '긍정', '자유', '평온',
+        '신뢰', '배려', '나눔', '화합', '창조', '번영', '풍요', '순수', '진실', '정의',
+        '아름다움', '따뜻함', '밝음', '새싹', '햇살', '무지개', '하늘', '바다', '선물', '축복',
+        '소망', '환희', '영광', '승리', '번성', '안정', '조화', '포용', '이해', '존중'
+    ].filter(word => word.length >= 2);
+
+    const COLOR_PALETTES = [
+        { bg: '#f0f8ff', h1: '#4a7c59', cell_bg: '#ffffff' },
+        { bg: '#fff0f5', h1: '#8b0000', cell_bg: '#ffffff' },
+        { bg: '#fffacd', h1: '#8b4513', cell_bg: '#ffffff' },
+        { bg: '#e6e6fa', h1: '#4b0082', cell_bg: '#ffffff' }
+    ];
+
+    // --- Game State ---
+    let currentGrid = [];
+    let foundWords = new Set();
+    let selectedCells = [];
+    let isSelecting = false;
+    let WORDS_TO_FIND = [];
+
+    // --- Attendance State ---
+    const LAST_PLAYED_DATE_KEY = 'lastPlayedDate';
+    const DAILY_PLAY_COUNT_KEY = 'dailyPlayCount';
+    const ATTENDANCE_STREAK_KEY = 'attendanceStreak';
+    const ABSENCE_COUNT_KEY = 'absenceCount';
+    const DAILY_GOAL_MET_TODAY_KEY = 'dailyGoalMetToday';
+    const VOUCHER_GOAL_DAYS = 30;
+    const DAILY_PLAY_TARGET = 10;
+    const ABSENCE_GRACE_DAYS = 3;
+
+    let dailyPlayCount = 0;
+    let attendanceStreak = 0;
+    let absenceCount = 0;
+    let dailyGoalMetToday = false;
+
+    // --- Main Logic ---
+
+    function handleAttendance() {
+        let lastPlayedDateStr = localStorage.getItem(LAST_PLAYED_DATE_KEY);
+        let storedStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
+        let storedAbsence = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
+        let storedDailyCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
+        let storedGoalMet = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (lastPlayedDateStr) {
+            const lastDate = new Date(lastPlayedDateStr);
+            lastDate.setHours(0, 0, 0, 0);
+
+            const diffTime = today.getTime() - lastDate.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) { // Same day
+                dailyPlayCount = storedDailyCount;
+                attendanceStreak = storedStreak;
+                absenceCount = storedAbsence;
+                dailyGoalMetToday = storedGoalMet;
+            } else { // It's a new day
+                if (storedDailyCount < DAILY_PLAY_TARGET) {
+                    absenceCount = storedAbsence + diffDays;
+                } else {
+                    attendanceStreak = storedStreak + 1;
+                    absenceCount = 0;
+                }
+
+                if (absenceCount > ABSENCE_GRACE_DAYS) {
+                    attendanceStreak = 0;
+                    absenceCount = 0;
+                }
+
+                dailyPlayCount = 0;
+                dailyGoalMetToday = false;
+            }
+        } else {
+            // First time playing
+            dailyPlayCount = 0;
+            attendanceStreak = 0;
+            absenceCount = 0;
+            dailyGoalMetToday = false;
+        }
+
+        updateAndSaveState();
+    }
+
+    function updateAndSaveState() {
+        localStorage.setItem(LAST_PLAYED_DATE_KEY, new Date().toISOString());
+        localStorage.setItem(DAILY_PLAY_COUNT_KEY, dailyPlayCount.toString());
+        localStorage.setItem(ATTENDANCE_STREAK_KEY, attendanceStreak.toString());
+        localStorage.setItem(ABSENCE_COUNT_KEY, absenceCount.toString());
+        localStorage.setItem(DAILY_GOAL_MET_TODAY_KEY, dailyGoalMetToday.toString());
+
+        absenceDisplay.textContent = absenceCount.toString();
+        const remainingDays = Math.max(0, VOUCHER_GOAL_DAYS - attendanceStreak);
+        remainingDaysDisplay.textContent = remainingDays.toString();
+        dailyPlayCountDisplay.textContent = dailyPlayCount.toString();
+    }
+
+    function getRandomKoreanChar() {
+        const start = 0xAC00;
+        const end = 0xD7A3;
+        return String.fromCharCode(Math.floor(Math.random() * (end - start + 1)) + start);
+    }
+
+    function initializeGame() {
+        gridContainer.innerHTML = '';
+        messageArea.style.display = 'none';
+        messageArea.textContent = '';
+        foundWords.clear();
+        selectedCells = [];
+        isSelecting = false;
+
+        WORDS_TO_FIND = [];
+        const shuffledWords = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
+        for (let i = 0; i < WORDS_PER_PUZZLE; i++) {
+            WORDS_TO_FIND.push(shuffledWords[i]);
+        }
+
+        const randomPalette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
+        document.body.style.backgroundColor = randomPalette.bg;
+        document.querySelector('h1').style.color = randomPalette.h1;
+        gridContainer.style.backgroundColor = '#ccc';
+
+        currentGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(''));
+
+        placeWordsInGrid();
+        fillEmptyCells();
+        renderGrid();
+
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.style.backgroundColor = randomPalette.cell_bg;
+        });
+
+        remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length}개`;
+    }
+
+    function placeWordsInGrid() {
+        WORDS_TO_FIND.forEach(word => {
+            let placed = false;
+            let attempts = 0;
+            while (!placed && attempts < 500) {
+                const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                const row = Math.floor(Math.random() * GRID_ROWS);
+                const col = Math.floor(Math.random() * GRID_COLS);
+
+                if (direction === 'horizontal') {
+                    if (col + word.length <= GRID_COLS) {
+                        let canPlace = true;
+                        for (let i = 0; i < word.length; i++) {
+                            if (currentGrid[row][col + i] !== '') { canPlace = false; break; }
+                        }
+                        if (canPlace) {
+                            for (let i = 0; i < word.length; i++) { currentGrid[row][col + i] = word[i]; }
+                            placed = true;
+                        }
+                    }
+                } else {
+                    if (row + word.length <= GRID_ROWS) {
+                        let canPlace = true;
+                        for (let i = 0; i < word.length; i++) {
+                            if (currentGrid[row + i][col] !== '') { canPlace = false; break; }
+                        }
+                        if (canPlace) {
+                            for (let i = 0; i < word.length; i++) { currentGrid[row + i][col] = word[i]; }
+                            placed = true;
+                        }
+                    }
+                }
+                attempts++;
+            }
+            if (!placed) console.warn(`Could not place word: ${word}`);
+        });
+    }
+
+    function fillEmptyCells() {
+        for (let r = 0; r < GRID_ROWS; r++) {
+            for (let c = 0; c < GRID_COLS; c++) {
+                if (currentGrid[r][c] === '') {
+                    currentGrid[r][c] = getRandomKoreanChar();
+                }
+            }
+        }
+    }
+
+    function renderGrid() {
+        gridContainer.style.gridTemplateColumns = `repeat(${GRID_COLS}, 1fr)`;
+        for (let r = 0; r < GRID_ROWS; r++) {
+            for (let c = 0; c < GRID_COLS; c++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.textContent = currentGrid[r][c];
+                gridContainer.appendChild(cell);
+            }
+        }
+    }
+
+    function checkSelectedWord() {
+        if (selectedCells.length === 0) return;
+        const selectedWord = selectedCells.map(cell => cell.textContent).join('');
+
+        if (WORDS_TO_FIND.includes(selectedWord) && !foundWords.has(selectedWord)) {
+            foundWords.add(selectedWord);
+            selectedCells.forEach(cell => cell.classList.add('highlighted'));
+            remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length - foundWords.size}개`;
+            showMessage('정답입니다!', 'green');
+
+            if (foundWords.size === WORDS_TO_FIND.length) {
+                dailyPlayCount++;
+                
+                if (dailyPlayCount >= DAILY_PLAY_TARGET && !dailyGoalMetToday) {
+                    dailyGoalMetToday = true;
+                    attendanceStreak++;
+                    absenceCount = 0;
+                    showMessage('축하합니다! 오늘 목표를 달성하셨습니다.', 'blue');
+                }
+                
+                updateAndSaveState();
+
+                setTimeout(() => {
+                    showMessage('모든 낱말을 찾았습니다! 새로운 퍼즐을 시작합니다.', 'blue');
+                    setTimeout(initializeGame, 3000);
+                }, 1000);
+            }
+        } else {
+            showMessage('다시 시도해 보세요.', 'red');
+        }
+    }
+
+    function showMessage(msg, color) {
+        messageArea.textContent = msg;
+        messageArea.style.color = color;
+        messageArea.style.display = 'block';
+        setTimeout(() => {
+            messageArea.style.display = 'none';
+        }, 3000);
+    }
+
+    // --- Event Listeners ---
+    gridContainer.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('grid-cell')) {
+            isSelecting = true;
+            selectedCells = [e.target];
+            e.target.classList.add('selected');
+        }
+    });
+
+    gridContainer.addEventListener('mouseover', (e) => {
+        if (isSelecting && e.target.classList.contains('grid-cell') && !selectedCells.includes(e.target)) {
+            selectedCells.push(e.target);
+            e.target.classList.add('selected');
+        }
+    });
+
+    gridContainer.addEventListener('mouseup', () => {
+        if (isSelecting) {
+            isSelecting = false;
+            checkSelectedWord();
+            document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
+            selectedCells = [];
+        }
+    });
+
+    // --- Modal and Initial Setup ---
+    handleAttendance();
+
+    if (motivationModal) {
+        motivationModal.style.display = 'flex';
+        const startGame = () => {
+            motivationModal.style.display = 'none';
+            initializeGame();
+        };
+        closeModalButton.onclick = startGame;
+        startGameButton.onclick = startGame;
+    } else {
+        initializeGame();
+    }
+});

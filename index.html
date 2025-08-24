@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>숨은 낱말 찾기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>숨은 낱말 찾기</h1>
+    <div id="attendance-info">
+        <p>현재 결석 일수: <span id="absence-display">0</span>일</p>
+        <p>식사권까지 남은 일수: <span id="remaining-days-display">30</span>일</p>
+        <p>오늘 게임 횟수: <span id="daily-play-count-display">0</span>회 / 10회</p>
+    </div>
+
+    <div id="game-container">
+        <div id="grid-container"></div>
+        <div id="word-list-container">
+            <h2>남은 낱말</h2>
+            <span id="remaining-words-count"></span>
+        </div>
+    </div>
+
+    <div id="motivation-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>🎉 한 달 도전! 🎉</h2>
+            <p>매일 꾸준히 '숨은 낱말 찾기' 게임을 플레이하시면,</p>
+            <p>한 달 뒤 **5인 가족 식사권**을 드립니다!</p>
+            <p>단, 하루에 **10번 이상** 게임을 완료해야 출석으로 인정됩니다.</p>
+            <p><strong>3일 결석</strong>까지는 봐드릴게요. 그 이상 결석하면 처음부터 다시 시작해야 해요.</p>
+            <p>오늘도 즐겁게 게임하고 식사권에 도전하세요!</p>
+            <button id="start-game-button" class="modal-button">준비되면 누르세요</button>
+        </div>
+    </div>
+
+</body>
+    <div id="message-area" style="display: none;"></div>
+    <script src="script.js"></script>
+</body>
+</html>
