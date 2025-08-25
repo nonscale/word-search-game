@@ -106,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
         dailyPlayCountDisplay.textContent = dailyPlayCount.toString();
     }
 
+    function getRandomKoreanChar() {
+        const start = 0xAC00;
+        const end = 0xD7A3;
+        return String.fromCharCode(Math.floor(Math.random() * (end - start + 1)) + start);
+    }
+
     function initializeGame() {
         gridContainer.innerHTML = '';
         messageArea.style.display = 'none';
@@ -154,10 +160,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (col + word.length <= GRID_COLS) {
                         let isSpaceFree = true;
                         for (let i = 0; i < word.length; i++) {
-                            if (placementGrid[row][col + i]) {
-                                isSpaceFree = false;
-                                break;
+                            for (let dr = -1; dr <= 1; dr++) {
+                                for (let dc = -1; dc <= 1; dc++) {
+                                    const checkRow = row + dr;
+                                    const checkCol = col + i + dc;
+                                    if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
+                                        if (placementGrid[checkRow][checkCol]) {
+                                            isSpaceFree = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!isSpaceFree) break;
                             }
+                            if (!isSpaceFree) break;
                         }
                         canPlace = isSpaceFree;
                     }
@@ -165,10 +181,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (row + word.length <= GRID_ROWS) {
                         let isSpaceFree = true;
                         for (let i = 0; i < word.length; i++) {
-                            if (placementGrid[row + i][col]) {
-                                isSpaceFree = false;
-                                break;
+                            for (let dr = -1; dr <= 1; dr++) {
+                                for (let dc = -1; dc <= 1; dc++) {
+                                    const checkRow = row + i + dr;
+                                    const checkCol = col + dc;
+                                    if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
+                                        if (placementGrid[checkRow][checkCol]) {
+                                            isSpaceFree = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!isSpaceFree) break;
                             }
+                            if (!isSpaceFree) break;
                         }
                         canPlace = isSpaceFree;
                     }
@@ -179,14 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let r = direction === 'vertical' ? row + i : row;
                         let c = direction === 'horizontal' ? col + i : col;
                         currentGrid[r][c] = word[i];
-                        // Mark buffer zone in placementGrid
-                        for (let dr = -1; dr <= 1; dr++) {
-                            for (let dc = -1; dc <= 1; dc++) {
-                                if (r + dr >= 0 && r + dr < GRID_ROWS && c + dc >= 0 && c + dc < GRID_COLS) {
-                                    placementGrid[r + dr][c + dc] = true;
-                                }
-                            }
-                        }
+                        placementGrid[r][c] = true;
                     }
                     placed = true;
                 }
@@ -200,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let r = 0; r < GRID_ROWS; r++) {
             for (let c = 0; c < GRID_COLS; c++) {
                 if (currentGrid[r][c] === '') {
-                    currentGrid[r][c] = '·';
+                    currentGrid[r][c] = getRandomKoreanChar();
                 }
             }
         }
