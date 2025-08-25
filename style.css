@@ -79,13 +79,7 @@ h1 {
 
 #word-list-container h2 {
     text-align: center;
-    margin-top: 0;
-    margin-bottom: 8px;
-}
-
-#remaining-words-count {
-    display: block;
-    text-align: center;
+    margin: 0;
     font-size: 1.5em;
     font-weight: bold;
 }
@@ -109,7 +103,7 @@ h1 {
     align-items: center;
     justify-content: center;
     background-color: #fff;
-    font-size: 6.5vw; /* Increased font size for mobile */
+    font-size: 6.5vw;
     font-weight: bold;
     cursor: pointer;
     user-select: none;
@@ -227,6 +221,6 @@ h1 {
     }
 
     .grid-cell {
-        font-size: 2.8em; /* Increased font size for desktop */
+        font-size: 2.8em;
     }
 }

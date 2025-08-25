@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays > 0) { // It's a new day
+            if (diffDays > 0) {
                 if (dailyPlayCount < DAILY_PLAY_TARGET) {
                     absenceCount += diffDays;
                 }
@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 dailyGoalMetToday = false;
             }
         } else {
-            // First time playing
             dailyPlayCount = 0;
             attendanceStreak = 0;
             absenceCount = 0;
@@ -105,12 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const remainingDays = Math.max(0, VOUCHER_GOAL_DAYS - attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
         dailyPlayCountDisplay.textContent = dailyPlayCount.toString();
-    }
-
-    function getRandomKoreanChar() {
-        const start = 0xAC00;
-        const end = 0xD7A3;
-        return String.fromCharCode(Math.floor(Math.random() * (end - start + 1)) + start);
     }
 
     function initializeGame() {
@@ -146,6 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function placeWordsInGrid() {
+        let placementGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(false));
+
         WORDS_TO_FIND.forEach(word => {
             let placed = false;
             let attempts = 0;
@@ -154,28 +149,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 const row = Math.floor(Math.random() * GRID_ROWS);
                 const col = Math.floor(Math.random() * GRID_COLS);
 
+                let canPlace = false;
                 if (direction === 'horizontal') {
                     if (col + word.length <= GRID_COLS) {
-                        let canPlace = true;
+                        let isSpaceFree = true;
                         for (let i = 0; i < word.length; i++) {
-                            if (currentGrid[row][col + i] !== '') { canPlace = false; break; }
+                            if (placementGrid[row][col + i]) {
+                                isSpaceFree = false;
+                                break;
+                            }
                         }
-                        if (canPlace) {
-                            for (let i = 0; i < word.length; i++) { currentGrid[row][col + i] = word[i]; }
-                            placed = true;
-                        }
+                        canPlace = isSpaceFree;
                     }
                 } else {
                     if (row + word.length <= GRID_ROWS) {
-                        let canPlace = true;
+                        let isSpaceFree = true;
                         for (let i = 0; i < word.length; i++) {
-                            if (currentGrid[row + i][col] !== '') { canPlace = false; break; }
+                            if (placementGrid[row + i][col]) {
+                                isSpaceFree = false;
+                                break;
+                            }
                         }
-                        if (canPlace) {
-                            for (let i = 0; i < word.length; i++) { currentGrid[row + i][col] = word[i]; }
-                            placed = true;
+                        canPlace = isSpaceFree;
+                    }
+                }
+
+                if (canPlace) {
+                    for (let i = 0; i < word.length; i++) {
+                        let r = direction === 'vertical' ? row + i : row;
+                        let c = direction === 'horizontal' ? col + i : col;
+                        currentGrid[r][c] = word[i];
+                        // Mark buffer zone in placementGrid
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                if (r + dr >= 0 && r + dr < GRID_ROWS && c + dc >= 0 && c + dc < GRID_COLS) {
+                                    placementGrid[r + dr][c + dc] = true;
+                                }
+                            }
                         }
                     }
+                    placed = true;
                 }
                 attempts++;
             }
@@ -187,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let r = 0; r < GRID_ROWS; r++) {
             for (let c = 0; c < GRID_COLS; c++) {
                 if (currentGrid[r][c] === '') {
-                    currentGrid[r][c] = getRandomKoreanChar();
+                    currentGrid[r][c] = '·';
                 }
             }
         }
@@ -219,14 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (foundWords.size === WORDS_TO_FIND.length) {
                 dailyPlayCount++;
-                
                 if (dailyPlayCount >= DAILY_PLAY_TARGET && !dailyGoalMetToday) {
                     dailyGoalMetToday = true;
                     attendanceStreak++;
                     absenceCount = 0;
                     showMessage('축하합니다! 오늘 목표를 달성하셨습니다.', 'blue');
                 }
-                
                 updateAndSaveState();
 
                 setTimeout(() => {
