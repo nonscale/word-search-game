@@ -107,9 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getRandomKoreanChar() {
-        const start = 0xAC00;
-        const end = 0xD7A3;
-        return String.fromCharCode(Math.floor(Math.random() * (end - start + 1)) + start);
+        return '뷁';
     }
 
     function initializeGame() {
