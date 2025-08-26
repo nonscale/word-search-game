@@ -107,7 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getRandomKoreanChar() {
-        return '뷁';
+        let charCode;
+        const start = 0xAC00; // 가
+        const end = 0xD7A3;   // 힣
+        // Loop until we find a character that has a final consonant (Jongseong)
+        do {
+            charCode = Math.floor(Math.random() * (end - start + 1)) + start;
+        } while ((charCode - start) % 28 === 0); // Keep trying if there's no Jongseong
+        return String.fromCharCode(charCode);
     }
 
     function initializeGame() {
