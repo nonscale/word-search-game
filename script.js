@@ -55,10 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleAttendance() {
         let lastPlayedDateStr = localStorage.getItem(LAST_PLAYED_DATE_KEY);
-        attendanceStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
-        absenceCount = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
-        dailyPlayCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
-        dailyGoalMetToday = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
+        let storedStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
+        let storedAbsence = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
+        let storedDailyCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
+        let storedGoalMet = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -70,9 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays > 0) {
-                if (dailyPlayCount < DAILY_PLAY_TARGET) {
-                    absenceCount += diffDays;
+            if (diffDays === 0) { // Same day
+                dailyPlayCount = storedDailyCount;
+                attendanceStreak = storedStreak;
+                absenceCount = storedAbsence;
+                dailyGoalMetToday = storedGoalMet;
+            } else { // It's a new day
+                if (storedDailyCount < DAILY_PLAY_TARGET) {
+                    absenceCount = storedAbsence + diffDays;
+                } else {
+                    attendanceStreak = storedStreak + 1;
+                    absenceCount = 0;
                 }
 
                 if (absenceCount > ABSENCE_GRACE_DAYS) {
@@ -84,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dailyGoalMetToday = false;
             }
         } else {
+            // First time playing
             dailyPlayCount = 0;
             attendanceStreak = 0;
             absenceCount = 0;
@@ -108,12 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getRandomKoreanChar() {
         let charCode;
-        const start = 0xAC00; // 가
-        const end = 0xD7A3;   // 힣
-        // Loop until we find a character that has a final consonant (Jongseong)
+        const start = 0xAC00;
+        const end = 0xD7A3;
         do {
             charCode = Math.floor(Math.random() * (end - start + 1)) + start;
-        } while ((charCode - start) % 28 === 0); // Keep trying if there's no Jongseong
+        } while ((charCode - start) % 28 === 0);
         return String.fromCharCode(charCode);
     }
 
