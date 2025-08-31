@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivationModal = document.getElementById('motivation-modal');
     const closeModalButton = document.querySelector('.close-button');
     const startGameButton = document.getElementById('start-game-button');
-    const statusPopup = document.getElementById('status-popup');
 
     // --- Constants ---
     const GRID_ROWS = 10;
@@ -264,9 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 updateAndSaveState();
 
+                const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
+                const progressMessage = `오늘 ${dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
+                
                 setTimeout(() => {
-                    showMessage('모든 낱말을 찾았습니다! 새로운 퍼즐을 시작합니다.', 'blue');
-                    setTimeout(initializeGame, 3000);
+                    showMessage(progressMessage, 'blue');
+                    setTimeout(initializeGame, 5000); // Show message for 5s, then restart
                 }, 1000);
             }
         } else {
@@ -344,17 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (motivationModal) {
         const startGame = () => {
             motivationModal.style.display = 'none';
-
-            const statusDailyPlay = document.getElementById('status-daily-play');
-            const statusRemainingDays = document.getElementById('status-remaining-days');
-            statusDailyPlay.textContent = dailyPlayCount.toString();
-            statusRemainingDays.textContent = Math.max(0, VOUCHER_GOAL_DAYS - attendanceStreak).toString();
-
-            statusPopup.style.display = 'block';
-            setTimeout(() => {
-                statusPopup.style.display = 'none';
-            }, 5000);
-
             initializeGame();
         };
 

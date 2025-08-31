@@ -118,12 +118,12 @@ h1 {
     color: #fff;
 }
 
-#message-area, .popup {
+#message-area {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: #4a7c59; /* Changed to theme color */
     color: white;
     padding: 20px 40px;
     border-radius: 10px;
@@ -132,10 +132,6 @@ h1 {
     font-size: 1.5em;
     font-weight: bold;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-.popup p {
-    margin: 10px 0;
 }
 
 /* Modal Styles */
