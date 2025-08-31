@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const gridContainer = document.getElementById('grid-container');
     const messageArea = document.getElementById('message-area');
+    const statusPopup = document.getElementById('status-popup');
     const absenceDisplay = document.getElementById('absence-display');
     const remainingDaysDisplay = document.getElementById('remaining-days-display');
     const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
@@ -21,6 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
         '아름다움', '따뜻함', '밝음', '새싹', '햇살', '무지개', '하늘', '바다', '선물', '축복',
         '소망', '환희', '영광', '승리', '진달래', '안정', '조화', '포용', '이해', '존중'
     ].filter(word => word.length >= 2);
+
+    const PRAISE_MESSAGES = [
+        "벌써 다 찾았어요!!",
+        "집중력이 정말 높으시네요!",
+        "남들보다 훨씬 빨라요~~",
+        "머리가 엄청 좋으신거 같아요~!",
+        "대단해요! 다음 문제도 기대되네요."
+    ];
 
     const COLOR_PALETTES = [
         { bg: '#f0f8ff', h1: '#4a7c59', cell_bg: '#ffffff' },
@@ -264,11 +273,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateAndSaveState();
 
                 const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
-                const progressMessage = `오늘 ${dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
+                const praiseMessage = PRAISE_MESSAGES[Math.floor(Math.random() * PRAISE_MESSAGES.length)];
+                const progressMessage = `${praiseMessage}\n오늘 ${dailyPlayCount}판 완료! 목표까지 ${remainingPlays}판 남았습니다.`;
                 
                 setTimeout(() => {
                     showMessage(progressMessage, 'blue');
-                                        setTimeout(initializeGame, 5000); // Restart game after 5 seconds
+                    const messageDuration = Math.max(3000, progressMessage.length * 500);
+                    setTimeout(initializeGame, messageDuration + 500); // Start next game after message disappears
                 }, 1000);
             }
         } else {
@@ -277,12 +288,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showMessage(msg, color) {
-        messageArea.textContent = msg;
-        messageArea.style.color = color;
+        messageArea.innerHTML = msg.replace(/\n/g, '<br>'); // Allow line breaks
+        messageArea.style.color = color === 'green' ? '#28a745' : (color === 'blue' ? '#007bff' : '#dc3545');
         messageArea.style.display = 'block';
+        
+        const duration = Math.max(3000, msg.length * 500);
+
         setTimeout(() => {
             messageArea.style.display = 'none';
-        }, 5000);
+        }, duration);
     }
 
     // --- Event Listeners ---
@@ -346,6 +360,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (motivationModal) {
         const startGame = () => {
             motivationModal.style.display = 'none';
+
+            const statusDailyPlay = document.getElementById('status-daily-play');
+            const statusRemainingDays = document.getElementById('status-remaining-days');
+            
+            let statusMessage = '';
+            if (dailyPlayCount === 0) {
+                statusMessage = '오늘의 첫 게임입니다! 화이팅!';
+            } else {
+                const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
+                statusMessage = `오늘 ${dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
+            }
+
+            statusPopup.innerHTML = statusMessage.replace(/\n/g, '<br>');
+            statusPopup.style.display = 'block';
+            
+            const duration = Math.max(3000, statusMessage.length * 500);
+            setTimeout(() => {
+                statusPopup.style.display = 'none';
+            }, duration);
+
             initializeGame();
         };
 
