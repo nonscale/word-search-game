@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 setTimeout(() => {
                     showMessage(progressMessage, 'blue');
-                    setTimeout(initializeGame, 5000); // Show message for 5s, then restart
+                                        setTimeout(initializeGame, 5000); // Restart game after 5 seconds
                 }, 1000);
             }
         } else {
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageArea.style.display = 'block';
         setTimeout(() => {
             messageArea.style.display = 'none';
-        }, 3000);
+        }, 5000);
     }
 
     // --- Event Listeners ---
