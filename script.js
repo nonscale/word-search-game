@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivationModal = document.getElementById('motivation-modal');
     const closeModalButton = document.querySelector('.close-button');
     const startGameButton = document.getElementById('start-game-button');
+    const statusPopup = document.getElementById('status-popup');
 
     // --- Constants ---
     const GRID_ROWS = 10;
@@ -55,10 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleAttendance() {
         let lastPlayedDateStr = localStorage.getItem(LAST_PLAYED_DATE_KEY);
-        let storedStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
-        let storedAbsence = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
-        let storedDailyCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
-        let storedGoalMet = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
+        attendanceStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
+        absenceCount = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
+        dailyPlayCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
+        dailyGoalMetToday = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -70,17 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays === 0) { // Same day
-                dailyPlayCount = storedDailyCount;
-                attendanceStreak = storedStreak;
-                absenceCount = storedAbsence;
-                dailyGoalMetToday = storedGoalMet;
-            } else { // It's a new day
-                if (storedDailyCount < DAILY_PLAY_TARGET) {
-                    absenceCount = storedAbsence + diffDays;
-                } else {
-                    attendanceStreak = storedStreak + 1;
-                    absenceCount = 0;
+            if (diffDays > 0) {
+                if (dailyPlayCount < DAILY_PLAY_TARGET) {
+                    absenceCount += diffDays;
                 }
 
                 if (absenceCount > ABSENCE_GRACE_DAYS) {
@@ -92,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 dailyGoalMetToday = false;
             }
         } else {
-            // First time playing
             dailyPlayCount = 0;
             attendanceStreak = 0;
             absenceCount = 0;
@@ -350,11 +342,23 @@ document.addEventListener('DOMContentLoaded', () => {
     handleAttendance();
 
     if (motivationModal) {
-        motivationModal.style.display = 'flex';
         const startGame = () => {
             motivationModal.style.display = 'none';
+
+            const statusDailyPlay = document.getElementById('status-daily-play');
+            const statusRemainingDays = document.getElementById('status-remaining-days');
+            statusDailyPlay.textContent = dailyPlayCount.toString();
+            statusRemainingDays.textContent = Math.max(0, VOUCHER_GOAL_DAYS - attendanceStreak).toString();
+
+            statusPopup.style.display = 'block';
+            setTimeout(() => {
+                statusPopup.style.display = 'none';
+            }, 5000);
+
             initializeGame();
         };
+
+        motivationModal.style.display = 'flex';
         closeModalButton.onclick = startGame;
         startGameButton.onclick = startGame;
     } else {
