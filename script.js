@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
             foundWords.add(selectedWord);
             selectedCells.forEach(cell => cell.classList.add('highlighted'));
             remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length - foundWords.size}개`;
-            showMessage('정답입니다!', 3000, () => {}); // Show for 3s, do nothing after
+            showMessage('정답입니다!', 3000);
 
             if (foundWords.size === WORDS_TO_FIND.length) {
                 dailyPlayCount++;
@@ -272,20 +272,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
                 let progressMessage = PRAISE_MESSAGES[Math.floor(Math.random() * PRAISE_MESSAGES.length)];
-                progressMessage += `\n오늘 ${dailyPlayCount}판 완료!`;
                 if (remainingPlays > 0) {
-                    progressMessage += ` 목표까지 ${remainingPlays}판 남았습니다.`;
+                    progressMessage += ` 오늘 ${dailyPlayCount}판 완료! 목표까지 ${remainingPlays}판 남았습니다.`;
                 } else {
-                    progressMessage += `\n오늘 목표를 모두 달성하셨어요!`;
+                    progressMessage += ` 오늘 목표 ${DAILY_PLAY_TARGET}판을 모두 달성하셨어요!`;
                 }
                 
                 const duration = Math.max(5000, progressMessage.length * 1200);
                 setTimeout(() => {
                     showMessage(progressMessage, duration, initializeGame);
-                }, 1000); // Show after a short delay
+                }, 1000);
             }
         } else {
-            showMessage('다시 시도해 보세요.', 3000, () => {});
+            showMessage('다시 시도해 보세요.', 3000);
         }
     }
 
@@ -362,10 +361,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let statusMessage = '';
             if (dailyPlayCount === 0) {
-                statusMessage = '오늘의 첫 게임입니다!\n화이팅!';
+                statusMessage = '오늘의 첫 게임입니다! 화이팅!';
             } else {
                 const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
-                statusMessage = `오늘 ${dailyPlayCount + 1}번째 게임이네요!\n목표까지 ${remainingPlays}판 남았습니다.`;
+                statusMessage = `오늘 ${dailyPlayCount + 1}번째 게임이네요! 목표까지 ${remainingPlays}판 남았습니다.`;
             }
 
             showMessage(statusMessage, 5000, initializeGame);
