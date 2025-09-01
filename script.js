@@ -259,7 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
             foundWords.add(selectedWord);
             selectedCells.forEach(cell => cell.classList.add('highlighted'));
             remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length - foundWords.size}개`;
-            
+            showMessage('정답입니다!', 3000);
+
             if (foundWords.size === WORDS_TO_FIND.length) {
                 dailyPlayCount++;
                 if (dailyPlayCount >= DAILY_PLAY_TARGET && !dailyGoalMetToday) {
@@ -278,10 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const duration = Math.max(5000, progressMessage.length * 1200);
-                showMessage(progressMessage, duration, initializeGame);
-
-            } else {
-                showMessage('정답입니다!', 3000);
+                setTimeout(() => {
+                    showMessage(progressMessage, duration, initializeGame);
+                }, 1000);
             }
         } else {
             showMessage('다시 시도해 보세요.', 3000);
