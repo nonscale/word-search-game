@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridContainer = document.getElementById('grid-container');
     const messageArea = document.getElementById('message-area');
     const messageText = document.getElementById('message-text');
-    const popupButton = document.getElementById('popup-button');
     const popupInstruction = document.querySelector('.popup-instruction');
+    const popupButton = document.getElementById('popup-button');
     const absenceDisplay = document.getElementById('absence-display');
     const remainingDaysDisplay = document.getElementById('remaining-days-display');
     const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "벌써 다 찾았어요!!",
         "집중력이 정말 높으시네요!",
         "남들보다 훨씬 빨라요~~",
-        "머리가 엄청 좋으신거 같아요~!!",
+        "머리가 엄청 좋으신거 같아요~!",
         "대단해요! 다음 문제도 기대되네요."
     ];
 
@@ -253,35 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showMessage(msg, options) {
-        messageText.innerHTML = msg.replace(/\n/g, '<br>');
-        
-        const showButton = options.showButton;
-        const duration = options.duration;
-        const callback = options.callback;
-
-        if (showButton) {
-            popupInstruction.style.display = 'block';
-            popupButton.style.display = 'block';
-            const newButton = popupButton.cloneNode(true);
-            popupButton.parentNode.replaceChild(newButton, popupButton);
-            
-            newButton.onclick = () => {
-                messageArea.style.display = 'none';
-                if (callback) callback();
-            };
-        } else {
-            popupInstruction.style.display = 'none';
-            popupButton.style.display = 'none';
-            setTimeout(() => {
-                messageArea.style.display = 'none';
-                if (callback) callback();
-            }, duration);
-        }
-
-        messageArea.style.display = 'flex';
-    }
-
     function checkSelectedWord() {
         if (selectedCells.length === 0) return;
         const selectedWord = selectedCells.map(cell => cell.textContent).join('');
@@ -308,14 +279,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressMessage += ` 오늘 목표 ${DAILY_PLAY_TARGET}판을 모두 달성하셨어요!`;
                 }
                 
-                showMessage(progressMessage, { showButton: true, callback: initializeGame });
+                showMessage(progressMessage, initializeGame);
 
             } else {
-                showMessage('정답입니다!', { duration: 2000, showButton: false });
+                showMessage('정답입니다!');
             }
         } else {
-            showMessage('다시 시도해 보세요.', { duration: 2000, showButton: false });
+            showMessage('다시 시도해 보세요.');
         }
+    }
+
+    function showMessage(msg, callback) {
+        messageText.textContent = msg;
+        messageArea.style.display = 'flex';
+
+        // This makes the button a one-time use button for this specific message
+        const newButton = popupButton.cloneNode(true);
+        popupButton.parentNode.replaceChild(newButton, popupButton);
+        
+        newButton.onclick = () => {
+            messageArea.style.display = 'none';
+            if (callback) callback();
+        };
     }
 
     // --- Event Listeners ---
@@ -379,7 +364,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (motivationModal) {
         const startGame = () => {
             motivationModal.style.display = 'none';
-            initializeGame();
+            
+            let statusMessage = '';
+            if (dailyPlayCount === 0) {
+                statusMessage = '오늘의 첫 게임입니다! 화이팅!';
+            } else {
+                const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
+                statusMessage = `오늘 ${dailyPlayCount + 1}번째 게임이네요! 목표까지 ${remainingPlays}판 남았습니다.`;
+            }
+
+            showMessage(statusMessage, initializeGame);
         };
 
         motivationModal.style.display = 'flex';
