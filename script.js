@@ -2,9 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const gridContainer = document.getElementById('grid-container');
     const messageArea = document.getElementById('message-area');
-    const messageText = document.getElementById('message-text');
-    const popupInstruction = document.querySelector('.popup-instruction');
-    const popupButton = document.getElementById('popup-button');
     const absenceDisplay = document.getElementById('absence-display');
     const remainingDaysDisplay = document.getElementById('remaining-days-display');
     const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
@@ -29,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "벌써 다 찾았어요!!",
         "집중력이 정말 높으시네요!",
         "남들보다 훨씬 빨라요~~",
-        "머리가 엄청 좋으신거 같아요~!",
+        "머리가 엄청 좋으신거 같아요~!!",
         "대단해요! 다음 문제도 기대되네요."
     ];
 
@@ -130,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeGame() {
         gridContainer.innerHTML = '';
         messageArea.style.display = 'none';
+        messageArea.textContent = '';
         foundWords.clear();
         selectedCells = [];
         isSelecting = false;
@@ -261,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
             foundWords.add(selectedWord);
             selectedCells.forEach(cell => cell.classList.add('highlighted'));
             remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length - foundWords.size}개`;
-
+            
             if (foundWords.size === WORDS_TO_FIND.length) {
                 dailyPlayCount++;
                 if (dailyPlayCount >= DAILY_PLAY_TARGET && !dailyGoalMetToday) {
@@ -279,28 +277,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressMessage += ` 오늘 목표 ${DAILY_PLAY_TARGET}판을 모두 달성하셨어요!`;
                 }
                 
-                showMessage(progressMessage, initializeGame);
+                const duration = Math.max(5000, progressMessage.length * 1200);
+                showMessage(progressMessage, duration, initializeGame);
 
             } else {
-                showMessage('정답입니다!');
+                showMessage('정답입니다!', 3000);
             }
         } else {
-            showMessage('다시 시도해 보세요.');
+            showMessage('다시 시도해 보세요.', 3000);
         }
     }
 
-    function showMessage(msg, callback) {
-        messageText.textContent = msg;
-        messageArea.style.display = 'flex';
-
-        // This makes the button a one-time use button for this specific message
-        const newButton = popupButton.cloneNode(true);
-        popupButton.parentNode.replaceChild(newButton, popupButton);
-        
-        newButton.onclick = () => {
+    function showMessage(msg, duration, callback) {
+        messageArea.innerHTML = msg.replace(/\n/g, '<br>');
+        messageArea.style.display = 'block';
+        setTimeout(() => {
             messageArea.style.display = 'none';
             if (callback) callback();
-        };
+        }, duration);
     }
 
     // --- Event Listeners ---
@@ -373,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusMessage = `오늘 ${dailyPlayCount + 1}번째 게임이네요! 목표까지 ${remainingPlays}판 남았습니다.`;
             }
 
-            showMessage(statusMessage, initializeGame);
+            showMessage(statusMessage, 5000, initializeGame);
         };
 
         motivationModal.style.display = 'flex';

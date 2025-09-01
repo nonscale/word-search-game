@@ -124,32 +124,21 @@ h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: #ffffff;
-    color: #333;
-    padding: 20px;
-    border-radius: 15px;
+    color: #4a7c59; /* Changed to theme color */
+    padding: 25px 40px;
+    border-radius: 10px;
     z-index: 1001;
     text-align: center;
-    font-size: 1.4em;
+    font-size: 1.5em;
     font-weight: bold;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     border: 2px solid #4a7c59;
-    min-width: 320px;
+    min-width: 300px; /* Added min-width */
     box-sizing: border-box;
-    display: none; /* Hidden by default */
-    flex-direction: column;
-    align-items: center;
 }
 
-.popup #message-text {
-    color: #4a7c59;
-    margin-bottom: 10px;
-}
-
-.popup-instruction {
-    font-size: 0.8em;
-    color: #666;
-    margin-top: 15px;
-    margin-bottom: 10px;
+.popup p {
+    margin: 10px 0;
 }
 
 /* Modal Styles */
@@ -214,7 +203,7 @@ h1 {
     color: white;
     padding: 10px 20px;
     border: none;
-    border-radius: 8px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 1.1em;
     margin-top: 20px;
@@ -223,19 +212,6 @@ h1 {
 
 .modal-button:hover {
     background-color: #0056b3;
-}
-
-.red-button {
-    background-color: #dc3545;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%; /* Make it round */
-    font-size: 1em;
-    padding: 0;
-}
-
-.red-button:hover {
-    background-color: #c82333;
 }
 
 /* Media query for larger screens */
