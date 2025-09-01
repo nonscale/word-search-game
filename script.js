@@ -29,36 +29,45 @@ document.addEventListener('DOMContentLoaded', () => {
         { bg: '#e6e6fa', h1: '#4b0082', cell_bg: '#ffffff' }
     ];
 
-    // --- Game State ---
-    let currentGrid = [];
-    let foundWords = new Set();
-    let selectedCells = [];
-    let isSelecting = false;
-    let WORDS_TO_FIND = [];
+    // --- Game and Attendance State (Refactored into objects) ---
+    const gameState = {
+        currentGrid: [],
+        foundWords: new Set(),
+        selectedCells: [],
+        isSelecting: false,
+        wordsToFind: []
+    };
 
-    // --- Attendance State ---
-    const LAST_PLAYED_DATE_KEY = 'lastPlayedDate';
-    const DAILY_PLAY_COUNT_KEY = 'dailyPlayCount';
-    const ATTENDANCE_STREAK_KEY = 'attendanceStreak';
-    const ABSENCE_COUNT_KEY = 'absenceCount';
-    const DAILY_GOAL_MET_TODAY_KEY = 'dailyGoalMetToday';
-    const VOUCHER_GOAL_DAYS = 30;
-    const DAILY_PLAY_TARGET = 10;
-    const ABSENCE_GRACE_DAYS = 3;
+    const attendanceState = {
+        lastPlayedDate: null,
+        dailyPlayCount: 0,
+        attendanceStreak: 0,
+        absenceCount: 0,
+        dailyGoalMetToday: false
+    };
 
-    let dailyPlayCount = 0;
-    let attendanceStreak = 0;
-    let absenceCount = 0;
-    let dailyGoalMetToday = false;
+    const STORAGE_KEYS = {
+        LAST_PLAYED: 'lastPlayedDate',
+        DAILY_COUNT: 'dailyPlayCount',
+        STREAK: 'attendanceStreak',
+        ABSENCE: 'absenceCount',
+        GOAL_MET: 'dailyGoalMetToday'
+    };
+    
+    const GOALS = {
+        VOUCHER_DAYS: 30,
+        DAILY_TARGET: 10,
+        GRACE_DAYS: 3
+    };
 
     // --- Main Logic ---
 
     function handleAttendance() {
-        let lastPlayedDateStr = localStorage.getItem(LAST_PLAYED_DATE_KEY);
-        attendanceStreak = parseInt(localStorage.getItem(ATTENDANCE_STREAK_KEY) || '0');
-        absenceCount = parseInt(localStorage.getItem(ABSENCE_COUNT_KEY) || '0');
-        dailyPlayCount = parseInt(localStorage.getItem(DAILY_PLAY_COUNT_KEY) || '0');
-        dailyGoalMetToday = (localStorage.getItem(DAILY_GOAL_MET_TODAY_KEY) === 'true');
+        const lastPlayedDateStr = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
+        attendanceState.attendanceStreak = parseInt(localStorage.getItem(STORAGE_KEYS.STREAK) || '0');
+        attendanceState.absenceCount = parseInt(localStorage.getItem(STORAGE_KEYS.ABSENCE) || '0');
+        attendanceState.dailyPlayCount = parseInt(localStorage.getItem(STORAGE_KEYS.DAILY_COUNT) || '0');
+        attendanceState.dailyGoalMetToday = (localStorage.getItem(STORAGE_KEYS.GOAL_MET) === 'true');
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -70,43 +79,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays === 0) { // Same day
-                // dailyPlayCount, attendanceStreak, absenceCount, dailyGoalMetToday are already loaded
-            } else { // It's a new day
-                if (dailyPlayCount < DAILY_PLAY_TARGET) {
-                    absenceCount += diffDays;
+            if (diffDays > 0) { // It's a new day
+                if (attendanceState.dailyPlayCount < GOALS.DAILY_TARGET) {
+                    attendanceState.absenceCount += diffDays;
                 }
 
-                if (absenceCount > ABSENCE_GRACE_DAYS) {
-                    attendanceStreak = 0;
-                    absenceCount = 0;
+                if (attendanceState.absenceCount > GOALS.GRACE_DAYS) {
+                    attendanceState.attendanceStreak = 0;
+                    attendanceState.absenceCount = 0;
                 }
 
-                dailyPlayCount = 0;
-                dailyGoalMetToday = false;
+                attendanceState.dailyPlayCount = 0;
+                attendanceState.dailyGoalMetToday = false;
             }
         } else {
-            // First time playing
-            dailyPlayCount = 0;
-            attendanceStreak = 0;
-            absenceCount = 0;
-            dailyGoalMetToday = false;
+            Object.assign(attendanceState, { dailyPlayCount: 0, attendanceStreak: 0, absenceCount: 0, dailyGoalMetToday: false });
         }
 
         updateAndSaveState();
     }
 
     function updateAndSaveState() {
-        localStorage.setItem(LAST_PLAYED_DATE_KEY, new Date().toISOString());
-        localStorage.setItem(DAILY_PLAY_COUNT_KEY, dailyPlayCount.toString());
-        localStorage.setItem(ATTENDANCE_STREAK_KEY, attendanceStreak.toString());
-        localStorage.setItem(ABSENCE_COUNT_KEY, absenceCount.toString());
-        localStorage.setItem(DAILY_GOAL_MET_TODAY_KEY, dailyGoalMetToday.toString());
+        localStorage.setItem(STORAGE_KEYS.LAST_PLAYED, new Date().toISOString());
+        localStorage.setItem(STORAGE_KEYS.DAILY_COUNT, attendanceState.dailyPlayCount.toString());
+        localStorage.setItem(STORAGE_KEYS.STREAK, attendanceState.attendanceStreak.toString());
+        localStorage.setItem(STORAGE_KEYS.ABSENCE, attendanceState.absenceCount.toString());
+        localStorage.setItem(STORAGE_KEYS.GOAL_MET, attendanceState.dailyGoalMetToday.toString());
 
-        absenceDisplay.textContent = absenceCount.toString();
-        const remainingDays = Math.max(0, VOUCHER_GOAL_DAYS - attendanceStreak);
+        absenceDisplay.textContent = attendanceState.absenceCount.toString();
+        const remainingDays = Math.max(0, GOALS.VOUCHER_DAYS - attendanceState.attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
-        dailyPlayCountDisplay.textContent = dailyPlayCount.toString();
+        dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
     }
 
     function getRandomKoreanChar() {
@@ -123,22 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.innerHTML = '';
         messageArea.style.display = 'none';
         messageArea.textContent = '';
-        foundWords.clear();
-        selectedCells = [];
-        isSelecting = false;
+        gameState.foundWords.clear();
+        gameState.selectedCells = [];
+        gameState.isSelecting = false;
 
-        WORDS_TO_FIND = [];
         const shuffledWords = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
-        for (let i = 0; i < WORDS_PER_PUZZLE; i++) {
-            WORDS_TO_FIND.push(shuffledWords[i]);
-        }
+        gameState.wordsToFind = shuffledWords.slice(0, WORDS_PER_PUZZLE);
 
         const randomPalette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
         document.body.style.backgroundColor = randomPalette.bg;
         document.querySelector('h1').style.color = randomPalette.h1;
         gridContainer.style.backgroundColor = '#ccc';
 
-        currentGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(''));
+        gameState.currentGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(''));
 
         placeWordsInGrid();
         fillEmptyCells();
@@ -148,13 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.style.backgroundColor = randomPalette.cell_bg;
         });
 
-        remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length}개`;
+        remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length}개`;
     }
 
     function placeWordsInGrid() {
         let placementGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(false));
 
-        WORDS_TO_FIND.forEach(word => {
+        gameState.wordsToFind.forEach(word => {
             let placed = false;
             let attempts = 0;
             while (!placed && attempts < 500) {
@@ -163,56 +163,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 const col = Math.floor(Math.random() * GRID_COLS);
 
                 let canPlace = false;
-                if (direction === 'horizontal') {
-                    if (col + word.length <= GRID_COLS) {
-                        let isSpaceFree = true;
-                        for (let i = 0; i < word.length; i++) {
-                            for (let dr = -1; dr <= 1; dr++) {
-                                for (let dc = -1; dc <= 1; dc++) {
-                                    const checkRow = row + dr;
-                                    const checkCol = col + i + dc;
-                                    if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
-                                        if (placementGrid[checkRow][checkCol]) {
-                                            isSpaceFree = false;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!isSpaceFree) break;
-                            }
-                            if (!isSpaceFree) break;
-                        }
-                        canPlace = isSpaceFree;
+                if (direction === 'horizontal' && col + word.length <= GRID_COLS) {
+                    let isSpaceFree = true;
+                    for (let i = 0; i < word.length; i++) {
+                        if (placementGrid[row][col + i]) { isSpaceFree = false; break; }
                     }
-                } else {
-                    if (row + word.length <= GRID_ROWS) {
-                        let isSpaceFree = true;
-                        for (let i = 0; i < word.length; i++) {
-                            for (let dr = -1; dr <= 1; dr++) {
-                                for (let dc = -1; dc <= 1; dc++) {
-                                    const checkRow = row + i + dr;
-                                    const checkCol = col + dc;
-                                    if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
-                                        if (placementGrid[checkRow][checkCol]) {
-                                            isSpaceFree = false;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if (!isSpaceFree) break;
-                            }
-                            if (!isSpaceFree) break;
-                        }
-                        canPlace = isSpaceFree;
+                    canPlace = isSpaceFree;
+                } else if (direction === 'vertical' && row + word.length <= GRID_ROWS) {
+                    let isSpaceFree = true;
+                    for (let i = 0; i < word.length; i++) {
+                        if (placementGrid[row + i][col]) { isSpaceFree = false; break; }
                     }
+                    canPlace = isSpaceFree;
                 }
 
                 if (canPlace) {
                     for (let i = 0; i < word.length; i++) {
                         let r = direction === 'vertical' ? row + i : row;
                         let c = direction === 'horizontal' ? col + i : col;
-                        currentGrid[r][c] = word[i];
-                        placementGrid[r][c] = true;
+                        gameState.currentGrid[r][c] = word[i];
+                        // Mark buffer zone in placementGrid
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                if (r + dr >= 0 && r + dr < GRID_ROWS && c + dc >= 0 && c + dc < GRID_COLS) {
+                                    placementGrid[r + dr][c + dc] = true;
+                                }
+                            }
+                        }
                     }
                     placed = true;
                 }
@@ -225,8 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function fillEmptyCells() {
         for (let r = 0; r < GRID_ROWS; r++) {
             for (let c = 0; c < GRID_COLS; c++) {
-                if (currentGrid[r][c] === '') {
-                    currentGrid[r][c] = getRandomKoreanChar();
+                if (gameState.currentGrid[r][c] === '') {
+                    gameState.currentGrid[r][c] = getRandomKoreanChar();
                 }
             }
         }
@@ -240,38 +217,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.classList.add('grid-cell');
                 cell.dataset.row = r;
                 cell.dataset.col = c;
-                cell.textContent = currentGrid[r][c];
+                cell.textContent = gameState.currentGrid[r][c];
                 gridContainer.appendChild(cell);
             }
         }
     }
 
     function checkSelectedWord() {
-        if (selectedCells.length === 0) return;
-        const selectedWord = selectedCells.map(cell => cell.textContent).join('');
+        if (gameState.selectedCells.length === 0) return;
+        const selectedWord = gameState.selectedCells.map(cell => cell.textContent).join('');
 
-        if (WORDS_TO_FIND.includes(selectedWord) && !foundWords.has(selectedWord)) {
-            foundWords.add(selectedWord);
-            selectedCells.forEach(cell => cell.classList.add('highlighted'));
-            remainingWordsCountSpan.textContent = `${WORDS_TO_FIND.length - foundWords.size}개`;
+        if (gameState.wordsToFind.includes(selectedWord) && !gameState.foundWords.has(selectedWord)) {
+            gameState.foundWords.add(selectedWord);
+            gameState.selectedCells.forEach(cell => cell.classList.add('highlighted'));
+            remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length - gameState.foundWords.size}개`;
             showMessage('정답입니다!', 'green');
 
-            if (foundWords.size === WORDS_TO_FIND.length) {
-                dailyPlayCount++;
-                if (dailyPlayCount >= DAILY_PLAY_TARGET && !dailyGoalMetToday) {
-                    dailyGoalMetToday = true;
-                    attendanceStreak++;
-                    absenceCount = 0;
+            if (gameState.foundWords.size === gameState.wordsToFind.length) {
+                attendanceState.dailyPlayCount++;
+                if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET && !attendanceState.dailyGoalMetToday) {
+                    attendanceState.dailyGoalMetToday = true;
+                    attendanceState.attendanceStreak++;
+                    attendanceState.absenceCount = 0;
                     showMessage('축하합니다! 오늘 목표를 달성하셨습니다.', 'blue');
                 }
                 updateAndSaveState();
 
-                const remainingPlays = Math.max(0, DAILY_PLAY_TARGET - dailyPlayCount);
-                const progressMessage = `오늘 ${dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
+                const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
+                const progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
                 
                 setTimeout(() => {
                     showMessage(progressMessage, 'blue');
-                    setTimeout(initializeGame, 5000); // Show message for 5s, then restart
+                    setTimeout(initializeGame, 5000);
                 }, 1000);
             }
         } else {
@@ -285,61 +262,61 @@ document.addEventListener('DOMContentLoaded', () => {
         messageArea.style.display = 'block';
         setTimeout(() => {
             messageArea.style.display = 'none';
-        }, 3000);
+        }, 5000);
     }
 
     // --- Event Listeners ---
     gridContainer.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('grid-cell')) {
-            isSelecting = true;
-            selectedCells = [e.target];
+            gameState.isSelecting = true;
+            gameState.selectedCells = [e.target];
             e.target.classList.add('selected');
         }
     });
 
     gridContainer.addEventListener('mouseover', (e) => {
-        if (isSelecting && e.target.classList.contains('grid-cell') && !selectedCells.includes(e.target)) {
-            selectedCells.push(e.target);
+        if (gameState.isSelecting && e.target.classList.contains('grid-cell') && !gameState.selectedCells.includes(e.target)) {
+            gameState.selectedCells.push(e.target);
             e.target.classList.add('selected');
         }
     });
 
     gridContainer.addEventListener('mouseup', () => {
-        if (isSelecting) {
-            isSelecting = false;
+        if (gameState.isSelecting) {
+            gameState.isSelecting = false;
             checkSelectedWord();
             document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
-            selectedCells = [];
+            gameState.selectedCells = [];
         }
     });
 
     gridContainer.addEventListener('touchstart', (e) => {
         if (e.target.classList.contains('grid-cell')) {
-            isSelecting = true;
-            selectedCells = [e.target];
+            gameState.isSelecting = true;
+            gameState.selectedCells = [e.target];
             e.target.classList.add('selected');
             e.preventDefault();
         }
     });
 
     gridContainer.addEventListener('touchmove', (e) => {
-        if (isSelecting) {
+        if (gameState.isSelecting) {
             e.preventDefault();
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (target && target.classList.contains('grid-cell') && !selectedCells.includes(target)) {
-                selectedCells.push(target);
+            if (target && target.classList.contains('grid-cell') && !gameState.selectedCells.includes(target)) {
+                gameState.selectedCells.push(target);
                 target.classList.add('selected');
             }
         }
     });
 
     gridContainer.addEventListener('touchend', () => {
-        if (isSelecting) {
-            isSelecting = false;
+        if (gameState.isSelecting) {
+            gameState.isSelecting = false;
             checkSelectedWord();
             document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
-            selectedCells = [];
+            gameState.selectedCells = [];
         }
     });
 
