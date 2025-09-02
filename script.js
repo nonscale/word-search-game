@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const remainingDays = Math.max(0, GOALS.VOUCHER_DAYS - attendanceState.attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
         dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
+        progressText.innerHTML = `오늘 게임 ${GOALS.DAILY_TARGET}회 중 <span id="daily-play-count-display">${attendanceState.dailyPlayCount}</span>회`;
     }
 
     function getRandomKoreanChar() {
@@ -154,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length}개`;
-        dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
         encouragementText.textContent = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
     }
 
@@ -269,16 +269,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     showMessage(progressMessage, 'blue');
                     setTimeout(initializeGame, 5000);
-                }, 1000);
+                }, 3000); // Show correct message for 3s, then show progress message
             }
         } else {
-            showMessage('다시 시도해 보세요.', 'red');
+            if(gameState.selectedCells.length > 0) {
+                showMessage('다시 시도해 보세요.', 'red');
+            }
         }
     }
 
     function showMessage(msg, color) {
-        messageArea.textContent = msg;
         messageArea.style.color = color;
+        messageArea.innerHTML = msg.replace(/\n/g, '<br>');
         messageArea.style.display = 'block';
         setTimeout(() => {
             messageArea.style.display = 'none';
@@ -320,11 +322,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     gridContainer.addEventListener('touchmove', (e) => {
-        if (isSelecting) {
+        if (gameState.isSelecting) {
             e.preventDefault();
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (target && target.classList.contains('grid-cell') && !gameState.selectedCells.includes(target)) {
+            if (target && target.classList.contains('grid-cell') && !selectedCells.includes(target)) {
                 gameState.selectedCells.push(target);
                 target.classList.add('selected');
             }
@@ -332,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     gridContainer.addEventListener('touchend', () => {
-        if (isSelecting) {
+        if (gameState.isSelecting) {
             gameState.isSelecting = false;
             checkSelectedWord();
             document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
