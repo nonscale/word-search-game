@@ -114,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         absenceDisplay.textContent = attendanceState.absenceCount.toString();
         const remainingDays = Math.max(0, GOALS.VOUCHER_DAYS - attendanceState.attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
-        dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
         progressText.innerHTML = `오늘 게임 ${GOALS.DAILY_TARGET}회 중 <span id="daily-play-count-display">${attendanceState.dailyPlayCount}</span>회`;
     }
 
@@ -245,34 +244,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function checkSelectedWord() {
         if (gameState.selectedCells.length === 0) return;
-        const selectedWord = gameState.selectedCells.map(cell => cell.textContent).join('');
+        const selectedWord = gameState.selectedCells.map(cell => cell.textContent.trim()).join('');
 
         if (gameState.wordsToFind.includes(selectedWord) && !gameState.foundWords.has(selectedWord)) {
             gameState.foundWords.add(selectedWord);
             gameState.selectedCells.forEach(cell => cell.classList.add('highlighted'));
             remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length - gameState.foundWords.size}개`;
-            showMessage('정답입니다!', 'green');
-
+            
             if (gameState.foundWords.size === gameState.wordsToFind.length) {
                 attendanceState.dailyPlayCount++;
                 if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET && !attendanceState.dailyGoalMetToday) {
                     attendanceState.dailyGoalMetToday = true;
                     attendanceState.attendanceStreak++;
                     attendanceState.absenceCount = 0;
-                    showMessage('축하합니다! 오늘 목표를 달성하셨습니다.', 'blue');
                 }
                 updateAndSaveState();
 
                 const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
-                const progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!\n목표까지 ${remainingPlays}판 남았습니다.`;
+                let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
+                if (remainingPlays > 0) {
+                    progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
+                } else {
+                    progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
+                }
                 
                 setTimeout(() => {
                     showMessage(progressMessage, 'blue');
                     setTimeout(initializeGame, 5000);
-                }, 3000); // Show correct message for 3s, then show progress message
+                }, 1000);
+            } else {
+                showMessage('정답입니다!', 'green');
             }
         } else {
-            if(gameState.selectedCells.length > 0) {
+            if (gameState.selectedCells.length > 0) {
                 showMessage('다시 시도해 보세요.', 'red');
             }
         }
@@ -326,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (target && target.classList.contains('grid-cell') && !selectedCells.includes(target)) {
+            if (target && target.classList.contains('grid-cell') && !gameState.selectedCells.includes(target)) {
                 gameState.selectedCells.push(target);
                 target.classList.add('selected');
             }
