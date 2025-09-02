@@ -2,7 +2,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent bouncing scroll on main body */
+    overflow: hidden;
 }
 
 body {
@@ -20,17 +20,17 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: auto; /* Allow this container to scroll if needed */
+    overflow-y: auto;
     width: 100%;
 }
 
-h1, #attendance-info, #game-container {
+h1, #progress-display, #game-container {
     width: 95%;
     max-width: 500px;
     margin-left: auto;
     margin-right: auto;
     box-sizing: border-box;
-    flex-shrink: 0; /* Prevent these from shrinking */
+    flex-shrink: 0;
 }
 
 h1 {
@@ -40,24 +40,35 @@ h1 {
     margin-bottom: 10px;
 }
 
-#attendance-info {
+/* New styles for the top progress display */
+#progress-display {
     margin-bottom: 10px;
     text-align: center;
-    font-size: 1em;
-    color: #555;
-    border: 1px solid #ddd;
-    padding: 5px;
+    padding: 10px;
     border-radius: 8px;
-    background-color: #f9f9f9;
+    background-color: #e9f5e9;
+    border: 1px solid #d4e9d4;
 }
 
-#attendance-info p {
-    margin: 4px 0;
-}
-
-#attendance-info span {
+#progress-display p {
+    margin: 5px 0;
     font-weight: bold;
+}
+
+#progress-text {
+    font-size: 1.2em;
+    color: #333;
+}
+
+#progress-text span {
     color: #007bff;
+    font-size: 1.1em;
+}
+
+#encouragement-text {
+    font-size: 1.1em;
+    color: #28a745;
+    min-height: 1.2em; /* Prevent layout shift */
 }
 
 #game-container {
@@ -72,15 +83,30 @@ h1 {
 
 #word-list-container {
     width: auto;
-    padding: 5px 0;
+    padding: 10px 0 0 0; /* Adjust padding */
     border-top: 1px solid #eee;
-    margin-top: 5px;
+    margin-top: 10px;
 }
 
 #word-list-container h2 {
     text-align: center;
-    margin: 0;
+    margin: 0 0 10px 0;
     font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Relocated attendance info styles */
+#attendance-info {
+    text-align: center;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+#attendance-info p {
+    margin: 2px 0;
+}
+
+#attendance-info span {
     font-weight: bold;
 }
 
@@ -119,8 +145,20 @@ h1 {
 }
 
 #message-area {
-    background-color: #4a7c59; /* Theme color */
-    color: white;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    color: #333333;
+    padding: 20px 40px;
+    border-radius: 10px;
+    z-index: 1001;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 1px solid #ddd;
 }
 
 /* Modal Styles */

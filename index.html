@@ -9,25 +9,27 @@
 <body>
     <main>
         <h1>숨은 낱말 찾기</h1>
-        <div id="attendance-info">
-            <p>현재 결석 일수: <span id="absence-display">0</span>일</p>
-            <p>식사권까지 남은 출석일: <span id="remaining-days-display">30</span>일</p>
-            <p>오늘 게임 횟수 10회 중 <span id="daily-play-count-display">0</span>회</p>
+        
+        <!-- New Progress Display Area -->
+        <div id="progress-display">
+            <p id="progress-text">오늘 게임 10회 중 <span id="daily-play-count-display">0</span>회</p>
+            <p id="encouragement-text">오늘도 화이팅!</p>
         </div>
 
         <div id="game-container">
             <div id="grid-container"></div>
             <div id="word-list-container">
                 <h2>남은 낱말: <span id="remaining-words-count"></span></h2>
+                <!-- Moved Attendance Info -->
+                <div id="attendance-info">
+                    <p>현재 결석 일수: <span id="absence-display">0</span>일</p>
+                    <p>식사권까지 남은 출석일: <span id="remaining-days-display">30</span>일</p>
+                </div>
             </div>
         </div>
     </main>
 
-    <div id="message-area" class="popup" style="display: none;"></div>
-
-    <div id="status-popup" class="popup" style="display: none;">
-        <!-- Content will be set by JavaScript -->
-    </div>
+    <div id="message-area" class="popup-base" style="display: none;"></div>
 
     <div id="motivation-modal" class="modal">
         <div class="modal-content">

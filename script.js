@@ -9,11 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivationModal = document.getElementById('motivation-modal');
     const closeModalButton = document.querySelector('.close-button');
     const startGameButton = document.getElementById('start-game-button');
+    const progressText = document.getElementById('progress-text');
+    const encouragementText = document.getElementById('encouragement-text');
 
     // --- Constants ---
     const GRID_ROWS = 10;
     const GRID_COLS = 8;
     const WORDS_PER_PUZZLE = 8;
+    const ENCOURAGEMENTS = [
+        '정말 빠르시네요!', '대단해요!', '오늘도 화이팅!', '천재 아닌가요?', '엄청난 집중력이시네요!', '와! 벌써 다 하셨어요?', '최고의 플레이어!'
+    ];
     const ALL_POSSIBLE_WORDS = [
         '행복', '기쁨', '사랑', '평화', '희망', '건강', '웃음', '감사', '용기', '지혜',
         '성장', '발전', '성공', '미래', '소망', '도전', '열정', '긍정', '자유', '평온',
@@ -29,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { bg: '#e6e6fa', h1: '#4b0082', cell_bg: '#ffffff' }
     ];
 
-    // --- Game and Attendance State (Refactored into objects) ---
+    // --- Game and Attendance State ---
     const gameState = {
         currentGrid: [],
         foundWords: new Set(),
@@ -63,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Main Logic ---
 
     function handleAttendance() {
-        const lastPlayedDateStr = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
+        let lastPlayedDateStr = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
         attendanceState.attendanceStreak = parseInt(localStorage.getItem(STORAGE_KEYS.STREAK) || '0');
         attendanceState.absenceCount = parseInt(localStorage.getItem(STORAGE_KEYS.ABSENCE) || '0');
         attendanceState.dailyPlayCount = parseInt(localStorage.getItem(STORAGE_KEYS.DAILY_COUNT) || '0');
@@ -79,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays > 0) { // It's a new day
+            if (diffDays > 0) {
                 if (attendanceState.dailyPlayCount < GOALS.DAILY_TARGET) {
                     attendanceState.absenceCount += diffDays;
                 }
@@ -149,6 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length}개`;
+        dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
+        encouragementText.textContent = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
     }
 
     function placeWordsInGrid() {
@@ -166,13 +173,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (direction === 'horizontal' && col + word.length <= GRID_COLS) {
                     let isSpaceFree = true;
                     for (let i = 0; i < word.length; i++) {
-                        if (placementGrid[row][col + i]) { isSpaceFree = false; break; }
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                const checkRow = row + dr;
+                                const checkCol = col + i + dc;
+                                if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
+                                    if (placementGrid[checkRow][checkCol]) { isSpaceFree = false; break; }
+                                }
+                            }
+                            if (!isSpaceFree) break;
+                        }
+                        if (!isSpaceFree) break;
                     }
                     canPlace = isSpaceFree;
                 } else if (direction === 'vertical' && row + word.length <= GRID_ROWS) {
                     let isSpaceFree = true;
                     for (let i = 0; i < word.length; i++) {
-                        if (placementGrid[row + i][col]) { isSpaceFree = false; break; }
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                const checkRow = row + i + dr;
+                                const checkCol = col + dc;
+                                if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
+                                    if (placementGrid[checkRow][checkCol]) { isSpaceFree = false; break; }
+                                }
+                            }
+                            if (!isSpaceFree) break;
+                        }
+                        if (!isSpaceFree) break;
                     }
                     canPlace = isSpaceFree;
                 }
@@ -182,14 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let r = direction === 'vertical' ? row + i : row;
                         let c = direction === 'horizontal' ? col + i : col;
                         gameState.currentGrid[r][c] = word[i];
-                        // Mark buffer zone in placementGrid
-                        for (let dr = -1; dr <= 1; dr++) {
-                            for (let dc = -1; dc <= 1; dc++) {
-                                if (r + dr >= 0 && r + dr < GRID_ROWS && c + dc >= 0 && c + dc < GRID_COLS) {
-                                    placementGrid[r + dr][c + dc] = true;
-                                }
-                            }
-                        }
+                        placementGrid[r][c] = true;
                     }
                     placed = true;
                 }
@@ -300,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     gridContainer.addEventListener('touchmove', (e) => {
-        if (gameState.isSelecting) {
+        if (isSelecting) {
             e.preventDefault();
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -312,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     gridContainer.addEventListener('touchend', () => {
-        if (gameState.isSelecting) {
+        if (isSelecting) {
             gameState.isSelecting = false;
             checkSelectedWord();
             document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
