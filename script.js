@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (lastPlayedDateStr) {
             const lastDate = new Date(lastPlayedDateStr);
-            lastDate..setHours(0, 0, 0, 0);
+            lastDate.setHours(0, 0, 0, 0);
 
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
