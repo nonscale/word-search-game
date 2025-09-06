@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const startGameButton = document.getElementById('start-game-button');
     const progressText = document.getElementById('progress-text');
     const encouragementText = document.getElementById('encouragement-text');
+    const dailyGoalModal = document.getElementById('daily-goal-modal');
+    const exitGameButton = document.getElementById('exit-game-button');
 
     // --- Constants ---
     const GRID_ROWS = 10;
@@ -61,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         DAILY_COUNT: 'dailyPlayCount',
         STREAK: 'attendanceStreak',
         ABSENCE: 'absenceCount',
-        GOAL_MET: 'dailyGoalMetToday'
+        GOAL_MET: 'dailyGoalMetToday',
+        USED_WORDS: 'usedWords'
     };
     
     const GOALS = {
@@ -83,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetDailyState() {
         attendanceState.dailyPlayCount = 0;
         attendanceState.dailyGoalMetToday = false;
+        localStorage.removeItem(STORAGE_KEYS.USED_WORDS);
     }
 
     function handleAbsences(diffDays) {
@@ -150,8 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.selectedCells = [];
         gameState.isSelecting = false;
 
-        const shuffledWords = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
+        const usedWords = JSON.parse(localStorage.getItem(STORAGE_KEYS.USED_WORDS) || '[]');
+        const availableWords = ALL_POSSIBLE_WORDS.filter(word => !usedWords.includes(word));
+
+        const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
         gameState.wordsToFind = shuffledWords.slice(0, WORDS_PER_PUZZLE);
+
+        const newUsedWords = [...usedWords, ...gameState.wordsToFind];
+        localStorage.setItem(STORAGE_KEYS.USED_WORDS, JSON.stringify(newUsedWords));
 
         const randomPalette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
         document.body.style.backgroundColor = randomPalette.bg;
@@ -278,19 +288,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateAndSaveState();
 
-        const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
-        let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
-        if (remainingPlays > 0) {
-            progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
+        if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET) {
+            dailyGoalModal.style.display = 'flex';
         } else {
-            progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
-        }
+            const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
+            let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
+            if (remainingPlays > 0) {
+                progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
+            } else {
+                progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
+            }
 
-        setTimeout(() => {
-            showMessage(progressMessage, 'blue');
-            setTimeout(initializeGame, 5000);
-        }, 1000);
+            setTimeout(() => {
+                showMessage(progressMessage, 'blue');
+                setTimeout(initializeGame, 5000);
+            }, 1000);
+        }
     }
+
+    exitGameButton.addEventListener('click', () => {
+        dailyGoalModal.style.display = 'none';
+        document.getElementById('game-container').style.display = 'none';
+        showMessage('오늘도 수고하셨습니다!', 'green');
+    });
 
     function handleIncorrectWord() {
         if (gameState.selectedCells.length > 0) {
