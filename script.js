@@ -17,14 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const GRID_COLS = 8;
     const WORDS_PER_PUZZLE = 8;
     const ENCOURAGEMENTS = [
-        '정말 빠르시네요!', '대단해요!', '오늘도 화이팅!', '천재 아닌가요?', '엄청난 집중력이시네요!', '와! 벌써 다 하셨어요?', '최고의 플레이어!'
+        '정말 빠르시네요!', '대단해요!', '오늘도 화이팅!', '천재 아닌가요?', '엄청난 집중력이시네요!', 
+        '와! 벌써 다 하셨어요?', '최고의 플레이어!'
     ];
     const ALL_POSSIBLE_WORDS = [
-        '행복', '기쁨', '사랑', '평화', '희망', '건강', '웃음', '감사', '용기', '지혜',
-        '성장', '발전', '성공', '미래', '소망', '도전', '열정', '긍정', '자유', '평온',
-        '신뢰', '배려', '나눔', '화합', '창조', '무궁화', '풍요', '순수', '진실', '정의',
-        '아름다움', '따뜻함', '밝음', '새싹', '햇살', '무지개', '하늘', '바다', '선물', '축복',
-        '소망', '환희', '영광', '승리', '진달래', '안정', '조화', '포용', '이해', '존중'
+        '행복', '기쁨', '사랑', '평화', '희망', '건강', '웃음', '감사', 
+        '용기', '지혜', '성장', '발전', '성공', '미래', '소망', '도전', 
+        '열정', '긍정', '자유', '평온', '신뢰', '배려', '나눔', '화합', 
+        '창조', '무궁화', '풍요', '순수', '진실', '정의', '아름다움', '따뜻함', 
+        '밝음', '새싹', '햇살', '무지개', '하늘', '바다', '선물', '축복',
+        '소망', '환희', '영광', '승리', '진달래', '안정', '조화', '포용', 
+        '이해', '존중', '친절', '예의', '예감', '예쁨', '소나기', '개나리',
+        '꽃잔디', '꽃밭', '꽃봉오리', '연필', '책상', '책임', '두꺼비', '개구리',
+        '소풍', '놀이터', '황소', '소나무', '소녀', '소년', '금반지', '소라'
     ].filter(word => word.length >= 2);
 
     const COLOR_PALETTES = [
@@ -67,35 +72,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Main Logic ---
 
-    function handleAttendance() {
-        let lastPlayedDateStr = localStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
+    function loadAttendanceState() {
         attendanceState.attendanceStreak = parseInt(localStorage.getItem(STORAGE_KEYS.STREAK) || '0');
         attendanceState.absenceCount = parseInt(localStorage.getItem(STORAGE_KEYS.ABSENCE) || '0');
         attendanceState.dailyPlayCount = parseInt(localStorage.getItem(STORAGE_KEYS.DAILY_COUNT) || '0');
         attendanceState.dailyGoalMetToday = (localStorage.getItem(STORAGE_KEYS.GOAL_MET) === 'true');
+        return localStorage.getItem(STORAGE_KEYS.LAST_PLAYED);
+    }
 
+    function resetDailyState() {
+        attendanceState.dailyPlayCount = 0;
+        attendanceState.dailyGoalMetToday = false;
+    }
+
+    function handleAbsences(diffDays) {
+        if (attendanceState.dailyPlayCount < GOALS.DAILY_TARGET) {
+            attendanceState.absenceCount += diffDays;
+        }
+
+        if (attendanceState.absenceCount > GOALS.GRACE_DAYS) {
+            attendanceState.attendanceStreak = 0;
+            attendanceState.absenceCount = 0;
+        }
+        resetDailyState();
+    }
+
+    function handleAttendance() {
+        const lastPlayedDateStr = loadAttendanceState();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         if (lastPlayedDateStr) {
             const lastDate = new Date(lastPlayedDateStr);
-            lastDate.setHours(0, 0, 0, 0);
+            lastDate..setHours(0, 0, 0, 0);
 
             const diffTime = today.getTime() - lastDate.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays > 0) {
-                if (attendanceState.dailyPlayCount < GOALS.DAILY_TARGET) {
-                    attendanceState.absenceCount += diffDays;
-                }
-
-                if (attendanceState.absenceCount > GOALS.GRACE_DAYS) {
-                    attendanceState.attendanceStreak = 0;
-                    attendanceState.absenceCount = 0;
-                }
-
-                attendanceState.dailyPlayCount = 0;
-                attendanceState.dailyGoalMetToday = false;
+                handleAbsences(diffDays);
             }
         } else {
             Object.assign(attendanceState, { dailyPlayCount: 0, attendanceStreak: 0, absenceCount: 0, dailyGoalMetToday: false });
@@ -242,43 +257,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleCorrectWord(selectedWord) {
+        gameState.foundWords.add(selectedWord);
+        gameState.selectedCells.forEach(cell => cell.classList.add('highlighted'));
+        remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length - gameState.foundWords.size}개`;
+
+        if (gameState.foundWords.size === gameState.wordsToFind.length) {
+            handleGameCompletion();
+        } else {
+            showMessage('정답입니다!', 'green');
+        }
+    }
+
+    function handleGameCompletion() {
+        attendanceState.dailyPlayCount++;
+        if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET && !attendanceState.dailyGoalMetToday) {
+            attendanceState.dailyGoalMetToday = true;
+            attendanceState.attendanceStreak++;
+            attendanceState.absenceCount = 0;
+        }
+        updateAndSaveState();
+
+        const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
+        let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
+        if (remainingPlays > 0) {
+            progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
+        } else {
+            progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
+        }
+
+        setTimeout(() => {
+            showMessage(progressMessage, 'blue');
+            setTimeout(initializeGame, 5000);
+        }, 1000);
+    }
+
+    function handleIncorrectWord() {
+        if (gameState.selectedCells.length > 0) {
+            showMessage('다시 시도해 보세요.', 'red');
+        }
+    }
+
     function checkSelectedWord() {
         if (gameState.selectedCells.length === 0) return;
         const selectedWord = gameState.selectedCells.map(cell => cell.textContent.trim()).join('');
 
         if (gameState.wordsToFind.includes(selectedWord) && !gameState.foundWords.has(selectedWord)) {
-            gameState.foundWords.add(selectedWord);
-            gameState.selectedCells.forEach(cell => cell.classList.add('highlighted'));
-            remainingWordsCountSpan.textContent = `${gameState.wordsToFind.length - gameState.foundWords.size}개`;
-            
-            if (gameState.foundWords.size === gameState.wordsToFind.length) {
-                attendanceState.dailyPlayCount++;
-                if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET && !attendanceState.dailyGoalMetToday) {
-                    attendanceState.dailyGoalMetToday = true;
-                    attendanceState.attendanceStreak++;
-                    attendanceState.absenceCount = 0;
-                }
-                updateAndSaveState();
-
-                const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
-                let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
-                if (remainingPlays > 0) {
-                    progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
-                } else {
-                    progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
-                }
-                
-                setTimeout(() => {
-                    showMessage(progressMessage, 'blue');
-                    setTimeout(initializeGame, 5000);
-                }, 1000);
-            } else {
-                showMessage('정답입니다!', 'green');
-            }
+            handleCorrectWord(selectedWord);
         } else {
-            if (gameState.selectedCells.length > 0) {
-                showMessage('다시 시도해 보세요.', 'red');
-            }
+            handleIncorrectWord();
         }
     }
 
@@ -291,60 +318,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    // --- Event Listeners ---
-    gridContainer.addEventListener('mousedown', (e) => {
-        if (e.target.classList.contains('grid-cell')) {
+    // --- Unified Event Listeners ---
+    function handleSelectionStart(target, event) {
+        if (target.classList.contains('grid-cell')) {
             gameState.isSelecting = true;
-            gameState.selectedCells = [e.target];
-            e.target.classList.add('selected');
+            gameState.selectedCells = [target];
+            target.classList.add('selected');
+            if (event) event.preventDefault();
         }
-    });
+    }
 
-    gridContainer.addEventListener('mouseover', (e) => {
-        if (gameState.isSelecting && e.target.classList.contains('grid-cell') && !gameState.selectedCells.includes(e.target)) {
-            gameState.selectedCells.push(e.target);
-            e.target.classList.add('selected');
+    function handleSelectionMove(target) {
+        if (gameState.isSelecting && target && target.classList.contains('grid-cell') && !gameState.selectedCells.includes(target)) {
+            gameState.selectedCells.push(target);
+            target.classList.add('selected');
         }
-    });
+    }
 
-    gridContainer.addEventListener('mouseup', () => {
+    function handleSelectionEnd() {
         if (gameState.isSelecting) {
             gameState.isSelecting = false;
             checkSelectedWord();
             document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
             gameState.selectedCells = [];
         }
-    });
+    }
 
-    gridContainer.addEventListener('touchstart', (e) => {
-        if (e.target.classList.contains('grid-cell')) {
-            gameState.isSelecting = true;
-            gameState.selectedCells = [e.target];
-            e.target.classList.add('selected');
-            e.preventDefault();
-        }
-    });
+    gridContainer.addEventListener('mousedown', (e) => handleSelectionStart(e.target, e));
+    gridContainer.addEventListener('mouseover', (e) => handleSelectionMove(e.target));
+    gridContainer.addEventListener('mouseup', handleSelectionEnd);
+    gridContainer.addEventListener('mouseleave', handleSelectionEnd); // Handle case where mouse leaves grid
 
+    gridContainer.addEventListener('touchstart', (e) => handleSelectionStart(e.target, e));
     gridContainer.addEventListener('touchmove', (e) => {
-        if (gameState.isSelecting) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (target && target.classList.contains('grid-cell') && !gameState.selectedCells.includes(target)) {
-                gameState.selectedCells.push(target);
-                target.classList.add('selected');
-            }
-        }
+        e.preventDefault();
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        handleSelectionMove(target);
     });
-
-    gridContainer.addEventListener('touchend', () => {
-        if (gameState.isSelecting) {
-            gameState.isSelecting = false;
-            checkSelectedWord();
-            document.querySelectorAll('.grid-cell.selected').forEach(cell => cell.classList.remove('selected'));
-            gameState.selectedCells = [];
-        }
-    });
+    gridContainer.addEventListener('touchend', handleSelectionEnd);
 
     // --- Modal and Initial Setup ---
     handleAttendance();

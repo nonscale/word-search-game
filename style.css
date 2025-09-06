@@ -2,7 +2,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: hidden; /* Prevent bouncing scroll on main body */
 }
 
 body {
@@ -20,17 +20,17 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: auto;
+    overflow-y: auto; /* Allow this container to scroll if needed */
     width: 100%;
 }
 
-h1, #progress-display, #game-container {
+h1, #attendance-info, #game-container {
     width: 95%;
     max-width: 500px;
     margin-left: auto;
     margin-right: auto;
     box-sizing: border-box;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Prevent these from shrinking */
 }
 
 h1 {
@@ -40,35 +40,24 @@ h1 {
     margin-bottom: 10px;
 }
 
-/* New styles for the top progress display */
-#progress-display {
+#attendance-info {
     margin-bottom: 10px;
     text-align: center;
-    padding: 10px;
+    font-size: 1em;
+    color: #555;
+    border: 1px solid #ddd;
+    padding: 5px;
     border-radius: 8px;
-    background-color: #e9f5e9;
-    border: 1px solid #d4e9d4;
+    background-color: #f9f9f9;
 }
 
-#progress-display p {
-    margin: 5px 0;
+#attendance-info p {
+    margin: 4px 0;
+}
+
+#attendance-info span {
     font-weight: bold;
-}
-
-#progress-text {
-    font-size: 1.2em;
-    color: #333;
-}
-
-#progress-text span {
     color: #007bff;
-    font-size: 1.1em;
-}
-
-#encouragement-text {
-    font-size: 1.1em;
-    color: #28a745;
-    min-height: 1.2em; /* Prevent layout shift */
 }
 
 #game-container {
@@ -83,30 +72,15 @@ h1 {
 
 #word-list-container {
     width: auto;
-    padding: 10px 0 0 0; /* Adjust padding */
+    padding: 5px 0;
     border-top: 1px solid #eee;
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
 #word-list-container h2 {
     text-align: center;
-    margin: 0 0 10px 0;
+    margin: 0;
     font-size: 1.5em;
-    font-weight: bold;
-}
-
-/* Relocated attendance info styles */
-#attendance-info {
-    text-align: center;
-    font-size: 0.9em;
-    color: #6c757d;
-}
-
-#attendance-info p {
-    margin: 2px 0;
-}
-
-#attendance-info span {
     font-weight: bold;
 }
 
@@ -144,21 +118,33 @@ h1 {
     color: #fff;
 }
 
+@keyframes fadeInScaleUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
 #message-area {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: #ffffff;
-    color: #333333;
-    padding: 20px 40px;
-    border-radius: 10px;
+    background: linear-gradient(145deg, #5cb85c, #4a9c4a);
+    color: white;
+    padding: 22px 45px;
+    border-radius: 15px;
     z-index: 1001;
     text-align: center;
-    font-size: 1.5em;
+    font-size: 1.6em;
     font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    border: 1px solid #ddd;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    border: 2px solid #fff;
+    animation: fadeInScaleUp 0.4s ease-out;
 }
 
 /* Modal Styles */
@@ -250,5 +236,9 @@ h1 {
 
     .grid-cell {
         font-size: 2.8em;
+    }
+
+    #message-area {
+        font-size: 2em;
     }
 }
