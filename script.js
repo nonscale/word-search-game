@@ -63,8 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DAILY_COUNT: 'dailyPlayCount',
         STREAK: 'attendanceStreak',
         ABSENCE: 'absenceCount',
-        GOAL_MET: 'dailyGoalMetToday',
-        USED_WORDS: 'usedWords'
+        GOAL_MET: 'dailyGoalMetToday'
     };
     
     const GOALS = {
@@ -86,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetDailyState() {
         attendanceState.dailyPlayCount = 0;
         attendanceState.dailyGoalMetToday = false;
-        localStorage.removeItem(STORAGE_KEYS.USED_WORDS);
     }
 
     function handleAbsences(diffDays) {
@@ -154,14 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.selectedCells = [];
         gameState.isSelecting = false;
 
-        const usedWords = JSON.parse(localStorage.getItem(STORAGE_KEYS.USED_WORDS) || '[]');
-        const availableWords = ALL_POSSIBLE_WORDS.filter(word => !usedWords.includes(word));
-
-        const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
+        const shuffledWords = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
         gameState.wordsToFind = shuffledWords.slice(0, WORDS_PER_PUZZLE);
-
-        const newUsedWords = [...usedWords, ...gameState.wordsToFind];
-        localStorage.setItem(STORAGE_KEYS.USED_WORDS, JSON.stringify(newUsedWords));
 
         const randomPalette = COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)];
         document.body.style.backgroundColor = randomPalette.bg;
