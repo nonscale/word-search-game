@@ -174,65 +174,83 @@ document.addEventListener('DOMContentLoaded', () => {
         encouragementText.textContent = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
     }
 
-    function placeWordsInGrid() {
-        let placementGrid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(false));
+    // Helper function to check if a word can be placed without overlapping or being adjacent to other words
+    function canPlaceWord(grid, word, row, col, direction) {
+        const len = word.length;
 
-        gameState.wordsToFind.forEach(word => {
-            let placed = false;
-            let attempts = 0;
-            while (!placed && attempts < 500) {
-                const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
-                const row = Math.floor(Math.random() * GRID_ROWS);
-                const col = Math.floor(Math.random() * GRID_COLS);
+        // 1. Check grid boundaries
+        if (direction === 'horizontal') {
+            if (col + len > GRID_COLS) return false;
+        } else { // vertical
+            if (row + len > GRID_ROWS) return false;
+        }
 
-                let canPlace = false;
-                if (direction === 'horizontal' && col + word.length <= GRID_COLS) {
-                    let isSpaceFree = true;
-                    for (let i = 0; i < word.length; i++) {
-                        for (let dr = -1; dr <= 1; dr++) {
-                            for (let dc = -1; dc <= 1; dc++) {
-                                const checkRow = row + dr;
-                                const checkCol = col + i + dc;
-                                if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
-                                    if (placementGrid[checkRow][checkCol]) { isSpaceFree = false; break; }
-                                }
-                            }
-                            if (!isSpaceFree) break;
-                        }
-                        if (!isSpaceFree) break;
-                    }
-                    canPlace = isSpaceFree;
-                } else if (direction === 'vertical' && row + word.length <= GRID_ROWS) {
-                    let isSpaceFree = true;
-                    for (let i = 0; i < word.length; i++) {
-                        for (let dr = -1; dr <= 1; dr++) {
-                            for (let dc = -1; dc <= 1; dc++) {
-                                const checkRow = row + i + dr;
-                                const checkCol = col + dc;
-                                if (checkRow >= 0 && checkRow < GRID_ROWS && checkCol >= 0 && checkCol < GRID_COLS) {
-                                    if (placementGrid[checkRow][checkCol]) { isSpaceFree = false; break; }
-                                }
-                            }
-                            if (!isSpaceFree) break;
-                        }
-                        if (!isSpaceFree) break;
-                    }
-                    canPlace = isSpaceFree;
+        // 2. Check if the area (word path + surrounding buffer) is empty
+        const startRow = Math.max(0, row - 1);
+        const startCol = Math.max(0, col - 1);
+        let endRow, endCol;
+
+        if (direction === 'horizontal') {
+            endRow = Math.min(GRID_ROWS - 1, row + 1);
+            endCol = Math.min(GRID_COLS - 1, col + len);
+        } else { // vertical
+            endRow = Math.min(GRID_ROWS - 1, row + len);
+            endCol = Math.min(GRID_COLS - 1, col + 1);
+        }
+
+        for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+                if (grid[r][c] !== '') {
+                    return false; // The buffer area is not empty
                 }
-
-                if (canPlace) {
-                    for (let i = 0; i < word.length; i++) {
-                        let r = direction === 'vertical' ? row + i : row;
-                        let c = direction === 'horizontal' ? col + i : col;
-                        gameState.currentGrid[r][c] = word[i];
-                        placementGrid[r][c] = true;
-                    }
-                    placed = true;
-                }
-                attempts++;
             }
-            if (!placed) console.warn(`Could not place word: ${word}`);
-        });
+        }
+
+        return true;
+    }
+
+    function placeWordsInGrid() {
+        let success = false;
+        let grid;
+        const wordsToPlace = [...gameState.wordsToFind];
+
+        // Loop until a valid grid with all words is generated. This prevents the bug of missing words.
+        while (!success) {
+            grid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(''));
+            let placedCount = 0;
+
+            for (const word of wordsToPlace) {
+                let placed = false;
+                let attempts = 0;
+                while (!placed && attempts < 500) { // Max attempts for a single word
+                    const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                    const row = Math.floor(Math.random() * GRID_ROWS);
+                    const col = Math.floor(Math.random() * GRID_COLS);
+
+                    if (canPlaceWord(grid, word, row, col, direction)) {
+                        // Place the word in the temporary grid
+                        for (let i = 0; i < word.length; i++) {
+                            if (direction === 'horizontal') {
+                                grid[row][col + i] = word[i];
+                            } else {
+                                grid[row + i][col] = word[i];
+                            }
+                        }
+                        placed = true;
+                        placedCount++;
+                    }
+                    attempts++;
+                }
+            }
+
+            // If all words were placed, the grid is valid
+            if (placedCount === wordsToPlace.length) {
+                success = true;
+            }
+            // Otherwise, the while loop will restart, clearing the grid and trying again.
+        }
+        // Once successful, assign the generated grid to the game state.
+        gameState.currentGrid = grid;
     }
 
     function fillEmptyCells() {
