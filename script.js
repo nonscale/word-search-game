@@ -298,22 +298,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateAndSaveState();
 
-        if (attendanceState.dailyPlayCount >= GOALS.DAILY_TARGET) {
-            dailyGoalModal.style.display = 'flex';
+        const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
+        let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
+        if (remainingPlays > 0) {
+            progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
         } else {
-            const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
-            let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
-            if (remainingPlays > 0) {
-                progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
-            } else {
-                progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
-            }
-
-            setTimeout(() => {
-                showMessage(progressMessage, 'blue');
-                setTimeout(initializeGame, 5000);
-            }, 1000);
+            progressMessage += `\n오늘 목표를 모두 달성하셨습니다!`;
         }
+
+        setTimeout(() => {
+            showMessage(progressMessage, 'blue');
+            setTimeout(initializeGame, 5000);
+        }, 1000);
     }
 
     exitGameButton.addEventListener('click', () => {
