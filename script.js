@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         '정말 빠르시네요!', '대단해요!', '오늘도 화이팅!', '천재 아닌가요?', '엄청난 집중력이시네요!', 
         '와! 벌써 다 하셨어요?', '최고의 플레이어!'
     ];
+    const COMPLETION_MESSAGES = ["참 잘했습니다", "대단해요", "굉장해요"];
+    let completionMessageIndex = 0;
     const ALL_POSSIBLE_WORDS = [
         '행복', '기쁨', '사랑', '평화', '희망', '건강', '웃음', '감사', 
         '용기', '지혜', '성장', '발전', '성공', '미래', '소망', '도전', 
@@ -298,17 +300,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateAndSaveState();
 
-        const remainingPlays = Math.max(0, GOALS.DAILY_TARGET - attendanceState.dailyPlayCount);
-        if (remainingPlays > 0) {
-            let progressMessage = `오늘 ${attendanceState.dailyPlayCount}판 완료!`;
-            progressMessage += `\n목표까지 ${remainingPlays}판 남았습니다.`;
-            setTimeout(() => {
-                showMessage(progressMessage, 'blue');
-                setTimeout(initializeGame, 5000);
-            }, 1000);
-        } else {
-            setTimeout(initializeGame, 1000);
-        }
+        const message = COMPLETION_MESSAGES[completionMessageIndex];
+        completionMessageIndex = (completionMessageIndex + 1) % COMPLETION_MESSAGES.length;
+
+        showMessage(message, 'green');
+
+        setTimeout(initializeGame, 3000);
     }
 
     exitGameButton.addEventListener('click', () => {
