@@ -136,9 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
         absenceDisplay.textContent = attendanceState.absenceCount.toString();
         const remainingDays = Math.max(0, GOALS.VOUCHER_DAYS - attendanceState.attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
-        if (modalProgressText) {
-            modalProgressText.textContent = `오늘 게임 ${attendanceState.dailyPlayCount}회 / ${GOALS.DAILY_TARGET}회`;
-        }
         if (dailyPlayCountDisplay) {
             dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
         }
