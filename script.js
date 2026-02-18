@@ -4,15 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageArea = document.getElementById('message-area');
     const absenceDisplay = document.getElementById('absence-display');
     const remainingDaysDisplay = document.getElementById('remaining-days-display');
-    const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
     const remainingWordsCountSpan = document.getElementById('remaining-words-count');
     const motivationModal = document.getElementById('motivation-modal');
     const closeModalButton = document.querySelector('.close-button');
     const startGameButton = document.getElementById('start-game-button');
-    const progressText = document.getElementById('progress-text');
     const encouragementText = document.getElementById('encouragement-text');
     const dailyGoalModal = document.getElementById('daily-goal-modal');
     const exitGameButton = document.getElementById('exit-game-button');
+    const gameTitle = document.getElementById('game-title');
+    const modalProgressText = document.getElementById('modal-progress-text');
 
     // --- Constants ---
     const GRID_ROWS = 10;
@@ -135,7 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
         absenceDisplay.textContent = attendanceState.absenceCount.toString();
         const remainingDays = Math.max(0, GOALS.VOUCHER_DAYS - attendanceState.attendanceStreak);
         remainingDaysDisplay.textContent = remainingDays.toString();
-        progressText.innerHTML = `오늘 게임 ${GOALS.DAILY_TARGET}회 중 <span id="daily-play-count-display">${attendanceState.dailyPlayCount}</span>회`;
+        if (modalProgressText) {
+            modalProgressText.textContent = `오늘 게임 ${attendanceState.dailyPlayCount}회 / ${GOALS.DAILY_TARGET}회`;
+        }
     }
 
     function getRandomKoreanChar() {
@@ -384,6 +386,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Modal and Initial Setup ---
     handleAttendance();
+
+    if (gameTitle && motivationModal) {
+        gameTitle.addEventListener('click', () => {
+            motivationModal.style.display = 'flex';
+        });
+    }
 
     if (motivationModal) {
         const startGame = () => {
