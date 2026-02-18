@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const exitGameButton = document.getElementById('exit-game-button');
     const gameTitle = document.getElementById('game-title');
     const modalProgressText = document.getElementById('modal-progress-text');
+    const dailyPlayCountDisplay = document.getElementById('daily-play-count-display');
 
     // --- Constants ---
     const GRID_ROWS = 10;
@@ -137,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
         remainingDaysDisplay.textContent = remainingDays.toString();
         if (modalProgressText) {
             modalProgressText.textContent = `오늘 게임 ${attendanceState.dailyPlayCount}회 / ${GOALS.DAILY_TARGET}회`;
+        }
+        if (dailyPlayCountDisplay) {
+            dailyPlayCountDisplay.textContent = attendanceState.dailyPlayCount.toString();
         }
     }
 
